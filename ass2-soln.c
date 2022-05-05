@@ -44,10 +44,13 @@
 #include <string.h>
 
 /* - Constant definitions - */
-#define MAXCOLS 100
-#define MAXROWS 100
-#define MAXOBST MAXCOLS * MAXROWS
-#define OBST_COLS 4
+#define MAX_COLS 100
+#define MAX_ROWS 100
+#define MAX_OBSTA MAX_COLS * MAX_ROWS
+#define OBSTA_COLS 4
+#define STAGE1 1
+#define STAGE2 2
+#define STAGE3 3
 #define X_MIN 0
 #define X_MAX 1
 #define Y_MIN 2
@@ -56,35 +59,41 @@
 
 /* ------- Typedefs ------- */
 
-typedef int cols_t[MAXCOLS];
-typedef int one_obst_t[OBST_COLS];
-typedef cols_t coords_t[MAXROWS];
-typedef one_obst_t obsts_t[MAXOBST];
+typedef int cols_t[MAX_COLS];
+typedef int one_obst_t[OBSTA_COLS];
+typedef cols_t coords_t[MAX_ROWS];
+typedef one_obst_t obsts_t[MAX_OBSTA];
 
 typedef struct {
     coords_t coords;
     obsts_t obstacles;
-    int nrows, ncols, nobsts;
+    int n_rows, n_cols, n_obstas;
 } robot_world_t;
 
 
 /* -- Function prototypes - */
 void read_data(robot_world_t *world, int max_rows, int max_cols);
-
+void do_stage1(robot_world_t world, int stage);
+void print_stage(int stage);
+void print_blank(void);
+void print_obstacle(robot_world_t world, int obst_num);
 
 
 /* ============================== Main function ============================= */
 
 int main(int argc, char *argv[]) {
     robot_world_t robot_world;
-    read_data(&robot_world, MAXROWS, MAXCOLS);
+    read_data(&robot_world, MAX_ROWS, MAX_COLS);
 
-    printf("%d x %d\n", robot_world.ncols, robot_world.nrows);
+    do_stage1(robot_world, STAGE1);
+
+
+    /*printf("%d x %d\n", robot_world.n_cols, robot_world.n_rows);
     for (int i = 0; i < robot_world.nobsts; i++) {
         printf("%d: [%d,%d]x[%d,%d]\n", i, robot_world.obstacles[i][X_MIN], 
             robot_world.obstacles[i][X_MAX], robot_world.obstacles[i][Y_MIN], 
             robot_world.obstacles[i][Y_MAX]);
-    }
+    }*/
 
 
 	return 0;
@@ -95,7 +104,7 @@ int main(int argc, char *argv[]) {
 void read_data(robot_world_t *world, int max_rows, int max_cols) {
     int x_min, x_max, y_min, y_max, num = 0;
     /* scans for the first two ints */
-    if (scanf("%d %d", &world -> ncols, &world -> nrows) != 2) {
+    if (scanf("%d %d", &world -> n_cols, &world -> n_rows) != 2) {
         exit(EXIT_FAILURE);
     }
 
@@ -106,15 +115,74 @@ void read_data(robot_world_t *world, int max_rows, int max_cols) {
         world->obstacles[num][Y_MIN] = y_min;
         world->obstacles[num][Y_MAX] = y_max;
         /* post-increment */
-        world->nobsts = num++;
+        world->n_obstas = num++;
 
     }
-    world->nobsts++;
+    world->n_obstas++;
     return;
 }
 
 
 /* ================================= Stage 1 ================================ */
 
+/* Stage 1 outputs the following
+    - the world dimensions
+    - number of obstacles in world
+    - obstacle dimensions */
+
+void do_stage1(robot_world_t world, int stage) {
+    int i;
+    /* print world dimensions */
+    print_stage(stage);
+    printf("world is %2d cells wide x %2d cells high\n", 
+        world.n_cols, world.n_rows);
+
+    /* prints out number of obstacles */
+    print_stage(stage);
+    printf("world contains %d obstacles\n", world.n_obstas);
+
+    /* prints areas of each obstacle */
+    for (i = 0; i < world.n_obstas; i++) {
+        print_stage(stage);
+        print_obstacle(world, i);
+    }
+
+    print_blank();
+    return;
+
+}
 
 
+
+/* ========================================================================== */
+/* ============================ Helper functions ============================ */
+/* ========================================================================== */
+
+
+
+
+/* ======================= Formating helper functions ======================= */
+
+void print_stage(int stage) {
+
+    printf("S%d, ", stage);
+
+    return;
+}
+
+
+/* ========================================================================== */
+
+void print_obstacle(robot_world_t world, int obst_num) {
+
+    printf("obstacle %2d covers [%2d,%2d] x [%2d,%2d]\n", obst_num, 
+        world.obstacles[obst_num][X_MIN], world.obstacles[obst_num][X_MAX],
+        world.obstacles[obst_num][Y_MIN], world.obstacles[obst_num][Y_MAX]);
+
+}
+
+/* ========================================================================== */
+
+void print_blank(void) {
+    printf("\n");
+}
