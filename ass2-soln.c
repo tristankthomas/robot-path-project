@@ -46,7 +46,7 @@
 /* - Constant definitions - */
 #define MAX_COLS 100
 #define MAX_ROWS 100
-#define MAX_OBSTA MAX_COLS * MAX_ROWS
+#define MAX_OBSTA MAX_COLS * MAX_ROWS - 1
 #define OBSTA_COLS 4
 #define STAGE1 1
 #define STAGE2 2
@@ -55,17 +55,19 @@
 #define X_MAX 1
 #define Y_MIN 2
 #define Y_MAX 3
+#define FIRST_Y 0
+#define FIRST_X 0
 
 
 /* ------- Typedefs ------- */
 
-typedef int cols_t[MAX_COLS];
+typedef char cols_t[MAX_COLS];
 typedef int one_obst_t[OBSTA_COLS];
 typedef cols_t coords_t[MAX_ROWS];
 typedef one_obst_t obsts_t[MAX_OBSTA];
 
 typedef struct {
-    coords_t coords;
+    coords_t coords_type;
     obsts_t obstacles;
     int n_rows, n_cols, n_obstas;
 } robot_world_t;
@@ -74,20 +76,38 @@ typedef struct {
 /* -- Function prototypes - */
 void read_data(robot_world_t *world, int max_rows, int max_cols);
 void do_stage1(robot_world_t world, int stage);
+void do_stage2(robot_world_t world, int stage);
 void print_stage(int stage);
 void print_blank(void);
 void print_obstacle(robot_world_t world, int obst_num);
+void obstacle_tagger(robot_world_t *world);
+int full_obstacle_check(robot_world_t world, int row, int col);
+int edge_check(robot_world_t world, int y, int x);
+int indiv_obstacle_check(robot_world_t world, int y, int x, int obsta, int type);
 
 
 /* ============================== Main function ============================= */
 
 int main(int argc, char *argv[]) {
     robot_world_t robot_world;
+    
     read_data(&robot_world, MAX_ROWS, MAX_COLS);
+    for (int i = 0; i < robot_world.n_rows; i++) {
+        for (int j = 0; j < robot_world.n_cols; j++) {
+            robot_world.coords_type[i][j] = '-';
+
+        }
+
+    }
+    printf("%c\n", robot_world.coords_type[1][1]);
 
     do_stage1(robot_world, STAGE1);
+    do_stage2(robot_world, STAGE2);
+    
+        
 
 
+    
     /*printf("%d x %d\n", robot_world.n_cols, robot_world.n_rows);
     for (int i = 0; i < robot_world.nobsts; i++) {
         printf("%d: [%d,%d]x[%d,%d]\n", i, robot_world.obstacles[i][X_MIN], 
@@ -130,6 +150,8 @@ void read_data(robot_world_t *world, int max_rows, int max_cols) {
     - number of obstacles in world
     - obstacle dimensions */
 
+      
+
 void do_stage1(robot_world_t world, int stage) {
     int i;
     /* print world dimensions */
@@ -153,12 +175,152 @@ void do_stage1(robot_world_t world, int stage) {
 }
 
 
+/* ================================= Stage 2 ================================ */
+
+/* Stage 2 outputs the following
+    - number of reachable cells
+    - number of obstacle cells 
+    - all the zones of unreachable cells
+    - NOTE: in the array coords, reachable cells will be marked '1', obstacle 
+      cells will be marked '0' and unreachable cells will be marked from 'a' 
+      to 'z' depending on number of zones. */
+
+void do_stage2(robot_world_t world, int stage) {
+    //int obstacle = 0;
+
+    /* marking known cell types */
+    world.coords_type[FIRST_Y][FIRST_X] = '1'; // home base
+    
+    obstacle_tagger(&world);
+
+    /* ~~~~~~~~~~~~~~ test print ~~~~~~~~~~~~~ */ 
+    for (int i = world.n_rows - 1; i >= -1; i--) {
+        if (i != -1) {
+            printf("%2d", i);
+        }
+
+        for (int j = world.n_cols - 1; j >= 0; j--) {
+
+            if (i == -1) {
+                if (j == world.n_cols - 1) {
+                    printf("  ");
+                }
+                printf(" %2d", j);
+            } else {
+                printf("%3c", world.coords_type[i][j]);
+            
+            }
+            
+        }
+        printf("\n");
+    }
+    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    /*for (int i = 0; i < world.n_rows; i++) {
+        for (int j = 0; !obstacle; j++) {
+            
+        }
+
+    }*/
+
+
+}
 
 /* ========================================================================== */
 /* ============================ Helper functions ============================ */
 /* ========================================================================== */
 
+/* ====================== Calculation helper functions ====================== */
 
+void obstacle_tagger(robot_world_t *world) {
+    for (int i = 0; i < world->n_obstas; i++) {
+
+        for (int j = world->obstacles[i][Y_MIN]; 
+                j <= world->obstacles[i][Y_MAX]; j++) {
+
+            for (int k = world->obstacles[i][X_MIN]; 
+                    k <= world->obstacles[i][X_MAX]; k++) {
+                
+                
+
+                world->coords_type[j][k] = '0';
+            }    
+        }
+    }
+
+
+}
+
+
+/* ========================================================================== */
+
+
+// int full_obstacle_check(robot_world_t world, int y, int x) {
+//     /* coordinate to either side of x and y */
+//     int right_x = x + 1;
+//     int left_x = x - 1;
+//     int up_y = y + 1;
+//     int down_y = y - 1;
+
+    
+//     for (int i = 0; i < world.n_obstas; i++) {
+//         /* checks for obstacle to the right */
+//         indiv_obstacle_check(world, y, x, i, RIGHT);
+        
+//         /* checks for obstacle to the left */
+
+
+//         /* checks for obstacle above */
+
+
+        
+        
+//     }
+//     return 0;
+    
+// }
+
+
+/* ========================================================================== */
+
+// int indiv_obstacle_check(robot_world_t world, int y, int x, int obsta, int type) {
+
+//     if (type == RIGHT) {
+//         return (x + 1 == world.obstacles[obsta][X_MIN] && 
+//                 (y >= world.obstacles[obsta][Y_MIN] && 
+//                 y <= world.obstacles[obsta][Y_MAX]));
+
+//     } else if (type == LEFT) {
+//         return (x - 1 == world.obstacles[obsta][X_MAX] && 
+//                 (y >= world.obstacles[obsta][Y_MIN] && 
+//                 y <= world.obstacles[obsta][Y_MAX]));
+
+
+//     } else if (type == TOP) {
+//         return (y + 1 == world.obstacles[obsta][Y_MIN] && 
+//                 (x >= world.obstacles[obsta][X_MIN] && 
+//                 x <= world.obstacles[obsta][X_MAX]));
+
+//     } else if (type == BOTTOM) {
+//         return (y - 1 == world.obstacles[obsta][Y_MAX] && 
+//                 (x >= world.obstacles[obsta][X_MIN] && 
+//                 x <= world.obstacles[obsta][X_MAX]));
+
+
+//     }
+
+// }
+
+
+/* ========================================================================== */
+
+// int edge_check(robot_world_t world, int row, int col) {
+
+//     return (row == FIRST_Y || row == world.n_rows - 1 ||
+//         col == FIRST_COL || col == world.n_cols - 1);
+
+
+// }
 
 
 /* ======================= Formating helper functions ======================= */
