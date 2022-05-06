@@ -469,8 +469,14 @@ int indiv_zone_tagger_s3(robot_world_t *world, int x, int y) {
     int top_edge = edge_detect(world, x, y, TOP);
     int bottom_edge = edge_detect(world, x, y, BOTTOM);
 
+    /* flags for edges */
+    int right_obst = world->coords_type[y][right_x] == OBSTACLE;
+    int left_obst = world->coords_type[y][left_x] == OBSTACLE;
+    int up_obst = world->coords_type[up_y][x] == OBSTACLE;
+    int down_obst = world->coords_type[down_y][x] == OBSTACLE;
+
     /* check to the right */
-    if (!right_edge && world->coords_type[y][right_x] != OBSTACLE) {
+    if (!right_edge && !right_obst) {
         /* could add if statement to seperate s2 and s3 */
         if (cost + CROSS_COST < world->coords_cost[y][right_x]) {
             world->coords_cost[y][right_x] = cost + CROSS_COST;
@@ -481,17 +487,18 @@ int indiv_zone_tagger_s3(robot_world_t *world, int x, int y) {
     }
 
     /* checks to the left */
-    if (!left_edge && world->coords_type[y][left_x] != OBSTACLE) {
+    if (!left_edge && !left_obst) {
 
         if (cost + CROSS_COST < world->coords_cost[y][left_x]) {
             world->coords_cost[y][left_x] = cost + CROSS_COST;
             changes++;
+
         }
 
     }
 
     /* checks above */
-    if (!top_edge && world->coords_type[up_y][x] != OBSTACLE) {
+    if (!top_edge && !up_obst) {
 
         if (cost + CROSS_COST < world->coords_cost[up_y][x]) {
             world->coords_cost[up_y][x] = cost + CROSS_COST;
@@ -501,7 +508,7 @@ int indiv_zone_tagger_s3(robot_world_t *world, int x, int y) {
     }
 
     /* checks below */
-    if (!bottom_edge && world->coords_type[down_y][x] != OBSTACLE) {
+    if (!bottom_edge && !down_obst) {
 
         if (cost + CROSS_COST < world->coords_cost[down_y][x]) {
             world->coords_cost[down_y][x] = cost + CROSS_COST;
@@ -509,6 +516,64 @@ int indiv_zone_tagger_s3(robot_world_t *world, int x, int y) {
         }
 
     }
+
+    /* checks top right */
+    if ((!right_edge && !top_edge) && 
+            world->coords_type[up_y][right_x] != OBSTACLE && 
+            (!right_obst && !up_obst)) {
+        /* could add if statement to seperate s2 and s3 */
+        if (cost + DIAG_COST < world->coords_cost[up_y][right_x]) {
+            world->coords_cost[up_y][right_x] = cost + DIAG_COST;
+            changes++;
+            printf("loop entered\n");
+        }
+        
+
+    }
+
+
+
+    /* checks top left */
+    if ((!left_edge && !top_edge) && 
+            world->coords_type[up_y][left_x] != OBSTACLE && 
+            (!left_obst && !up_obst)) {
+
+        if (cost + DIAG_COST < world->coords_cost[up_y][left_x]) {
+            world->coords_cost[up_y][left_x] = cost + DIAG_COST;
+            changes++;
+        }
+
+    }
+
+
+
+    /* checks bottom right */
+    if ((!right_edge && !bottom_edge) && 
+            world->coords_type[down_y][right_x] != OBSTACLE && 
+            (!right_obst && !down_obst)) {
+        /* could add if statement to seperate s2 and s3 */
+        if (cost + DIAG_COST < world->coords_cost[down_y][right_x]) {
+            world->coords_cost[down_y][right_x] = cost + DIAG_COST;
+            changes++;
+        }
+        
+
+    }
+
+
+
+    /* checks bottom left */
+    if ((!left_edge && !bottom_edge) && 
+            world->coords_type[down_y][left_x] != OBSTACLE && 
+            (!left_obst && !down_obst)) {
+
+        if (cost + DIAG_COST < world->coords_cost[down_y][left_x]) {
+            world->coords_cost[down_y][left_x] = cost + DIAG_COST;
+            changes++;
+        }
+
+    }
+
 
     return changes;
 
