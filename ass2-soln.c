@@ -65,7 +65,7 @@
 #define TOP 3
 #define BOTTOM 4
 
-#define OBSTACLE '0'
+#define OBSTACLE '|'
 #define REACHABLE '1'
 #define UNEXPLORED '-'
 
@@ -97,6 +97,7 @@ void read_data(robot_world_t *world, int max_rows, int max_cols);
 void do_stage1(robot_world_t *world, int stage);
 void do_stage2(robot_world_t *world, int stage);
 void do_stage3(robot_world_t *world, int stage);
+void ta_da(void);
 void print_stage(int stage);
 void print_blank(void);
 void print_obstacle(robot_world_t world, int obst_num);
@@ -106,6 +107,7 @@ int ovrl_zone_tagger_s3(robot_world_t *world, int x_start, int y_start);
 
 int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker);
 int indiv_zone_tagger_s3(robot_world_t *world, int x, int y);
+char conversion(int num);
 
 int edge_detect(robot_world_t *world, int x, int y, int type);
 int unreach_zone_tagger(robot_world_t *world, char marker);
@@ -140,7 +142,7 @@ int main(int argc, char *argv[]) {
     do_stage1(&robot_world, STAGE1);
     do_stage2(&robot_world, STAGE2);
     do_stage3(&robot_world, STAGE3);
-    
+    ta_da();
 
 	return 0;
 }
@@ -290,11 +292,56 @@ void do_stage3(robot_world_t *world, int stage) {
             break;
         }
     }
-    //ovrl_zone_tagger_s3(world, HOME_X, HOME_Y);
 
-    mix_print_world(*world);
+    /* adding correct formatted chars to coords_type */
+    world->coords_type[HOME_Y][HOME_X] = 'R';
+    for (int i = 0; i < world->n_rows; i++) {
+        for (int j = 0; j < world->n_cols; j++) {
+            if (world->coords_type[i][j] == REACHABLE) {
+
+                world->coords_type[i][j] = conversion(world->coords_cost[i][j]);
+
+                
+            }
+
+        }
+
+    }
 
 
+
+
+    for (int i = world->n_rows - 1; i >= 0; i--) {
+
+        if (i % 2 == 0) {
+            print_stage(stage);
+            if (i % 10 == 0) {
+                printf("%2d + ", i);
+            } else {
+                printf("   | ");
+            }
+
+            for (int j = 0; j < world->n_cols; j++) {
+                    printf("%c", world->coords_type[i][j]);
+                
+
+            }
+
+        print_blank();
+
+        }
+        
+    }
+
+    print_blank();
+
+}
+
+/* ========================================================================== */
+
+void ta_da(void) {
+
+    printf("ta daa!\n");
 
 }
 
@@ -525,7 +572,6 @@ int indiv_zone_tagger_s3(robot_world_t *world, int x, int y) {
         if (cost + DIAG_COST < world->coords_cost[up_y][right_x]) {
             world->coords_cost[up_y][right_x] = cost + DIAG_COST;
             changes++;
-            printf("loop entered\n");
         }
         
 
@@ -638,7 +684,31 @@ int unreach_zone_tagger(robot_world_t *world, char marker) {
 
 }
 
+/* ========================================================================== */
 
+char conversion(int num) {
+    char string[MAX_COST];
+    int length;
+
+    length = sprintf(string, "%d", num);
+
+    if (string[length - 1] >= '0' && string[length - 1] <= '3') {
+        if (length == 1) {
+            return '0';
+        } else {
+            return string[length - 2];
+        }
+        printf("entered loop\n");
+        
+
+    } else if (string[length - 1] >= '4' && string[length - 1] <= '9') {
+
+        return '.';
+    }
+    /* could add errors outside these control loops */
+    return '0';
+    
+}
 
 
 /* ======================= Formating helper functions ======================= */
@@ -722,7 +792,7 @@ void mix_print_world(robot_world_t world) {
             printf("%2d ", i);
         }
 
-        for (int j = world.n_cols - 1; j >= 0; j--) {
+        for (int j = 0; j < world.n_cols; j++) {
 
             if (i == -1) {
                 if (j == world.n_cols - 1) {
