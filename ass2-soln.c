@@ -96,6 +96,7 @@ int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker
 int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker);
 int edge_detect(robot_world_t *world, int x, int y, int type);
 int zone_tagger(robot_world_t *world, char marker);
+void print_cell_stats(robot_world_t world, int num, int stage);
 
 /* test function */
 void print_world(robot_world_t world);
@@ -195,15 +196,15 @@ void do_stage1(robot_world_t world, int stage) {
 
 void do_stage2(robot_world_t world, int stage) {
 
-    int i = 0, j = 0, num_reach = 1, prev_num_reach, num_obsta, num_zone = 0;
+    int num_reach = 1, prev_num_reach, num_obsta, num_zone = 0; //i = 0, j = 0, ;
     char tag = 'a';
 
 
     /* marking obstacle cells */
     num_obsta = obstacle_tagger(&world);
 
-    printf("AFTER OBSTACLES ADDED\n");
-    print_world(world);
+    // printf("AFTER OBSTACLES ADDED\n");
+    // print_world(world);
 
     while (1) {
         prev_num_reach = num_reach;
@@ -213,29 +214,41 @@ void do_stage2(robot_world_t world, int stage) {
             break;
         }
 
-        printf("AFTER RUN %d:\n", i);
-        print_world(world);
+        // printf("AFTER RUN %d:\n", i);
+        // print_world(world);
         
-        i++;
-        
-        
+        // i++;
+
 
     }
+    print_cell_stats(world, num_reach, stage);
+    printf("reachable\n");
+
 
     while (1) {
         num_zone = zone_tagger(&world, tag++);
+
         if (!num_zone) {
             break;
         }
-        printf("AFTER ZONE RUN %d NUMBER OF ADDITIONS IS %d:\n", j, num_zone);
-        print_world(world);
 
-        j++;
+
+        // printf("AFTER ZONE RUN %d NUMBER OF ADDITIONS IS %d:\n", j, num_zone);
+        // print_world(world);
+
+        // j++;
+
+        print_cell_stats(world, num_zone, stage);
+        printf("in unreachable zone %c\n", tag - 1);
+
 
     }
     
+    print_cell_stats(world, num_obsta, stage);
+    printf("obstacles\n");
 
-    printf("ovrl_changes = %d and num_obsta = %d\n", num_reach, num_obsta);
+    print_blank();
+    // printf("ovrl_changes = %d and num_obsta = %d\n", num_reach, num_obsta);
 
     
 
@@ -425,6 +438,27 @@ int zone_tagger(robot_world_t *world, char marker) {
 
 /* ======================= Formating helper functions ======================= */
 
+void print_obstacle(robot_world_t world, int obst_num) {
+
+    printf("obstacle %2d covers [%2d,%2d] x [%2d,%2d]\n", obst_num, 
+        world.obstacles[obst_num][X_MIN], world.obstacles[obst_num][X_MAX],
+        world.obstacles[obst_num][Y_MIN], world.obstacles[obst_num][Y_MAX]);
+
+}
+
+
+/* ========================================================================== */
+
+void print_cell_stats(robot_world_t world, int num, int stage) {
+
+    print_stage(stage);
+    printf("%4d of %4d cells are ", num, world.n_cols * world.n_rows);
+}
+
+
+
+/* ========================================================================== */
+
 void print_stage(int stage) {
 
     printf("S%d, ", stage);
@@ -435,19 +469,10 @@ void print_stage(int stage) {
 
 /* ========================================================================== */
 
-void print_obstacle(robot_world_t world, int obst_num) {
-
-    printf("obstacle %2d covers [%2d,%2d] x [%2d,%2d]\n", obst_num, 
-        world.obstacles[obst_num][X_MIN], world.obstacles[obst_num][X_MAX],
-        world.obstacles[obst_num][Y_MIN], world.obstacles[obst_num][Y_MAX]);
-
-}
-
-/* ========================================================================== */
-
 void print_blank(void) {
     printf("\n");
 }
+
 
 
 
