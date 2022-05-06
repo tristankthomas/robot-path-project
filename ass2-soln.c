@@ -69,7 +69,7 @@
 #define REACHABLE '1'
 #define UNEXPLORED '-'
 
-#define MAX_COST 1000
+#define MAX_COST 100000
 
 #define DIAG_COST 3
 #define CROSS_COST 2
@@ -280,8 +280,17 @@ void do_stage2(robot_world_t *world, int stage) {
 
 
 void do_stage3(robot_world_t *world, int stage) {
+    int num_changes = 1, prev_num_changes;
 
-    ovrl_zone_tagger_s3(world, HOME_X, HOME_Y);
+    while(1) {
+        prev_num_changes = num_changes;
+        num_changes += ovrl_zone_tagger_s3(world, HOME_X, HOME_Y);
+
+        if (prev_num_changes == num_changes) {
+            break;
+        }
+    }
+    //ovrl_zone_tagger_s3(world, HOME_X, HOME_Y);
 
     mix_print_world(*world);
 
@@ -425,7 +434,7 @@ int ovrl_zone_tagger_s3(robot_world_t *world, int x_start, int y_start) {
         for (int j = x_start; j < world->n_cols; j++) {
             /* stage 2 */
                 if (world->coords_type[i][j] == REACHABLE) {
-                    indiv_zone_tagger_s3(world, j, i);
+                    tot_changes += indiv_zone_tagger_s3(world, j, i);
                 }
                 
 
@@ -658,9 +667,9 @@ void mix_print_world(robot_world_t world) {
                 printf(" %2d", j);
             } else {
                 if (world.coords_type[i][j] == OBSTACLE || world.coords_type[i][j] >= 97) {
-                    printf("%3c", world.coords_type[i][j]);
+                    printf("%4c", world.coords_type[i][j]);
                 } else {
-                    printf("%3d", world.coords_cost[i][j]);
+                    printf("%4d", world.coords_cost[i][j]);
                 }
                 
             
