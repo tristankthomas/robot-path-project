@@ -206,7 +206,7 @@ void do_stage1(robot_world_t world, int stage) {
 
 void do_stage2(robot_world_t world, int stage) {
 
-    //int i = 0;
+    int i = 0;
 
     /* marking home base cell */
     world.coords_type[FIRST_Y][FIRST_X] = REACHABLE; // home base
@@ -215,16 +215,16 @@ void do_stage2(robot_world_t world, int stage) {
 
     printf("AFTER OBSTACLES ADDED\n");
     print_world(world);
-    // while (ovrl_reachable_tagger(&world) == 1) {
-    //     printf("AFTER RUN %d:\n", i);
-    //     print_world(world);
-    //     i++;
-    // }
+    while (ovrl_reachable_tagger(&world) == 1) {
+        printf("AFTER RUN %d:\n", i);
+        print_world(world);
+        i++;
+    }
 
-    ovrl_reachable_tagger(&world);
+    // ovrl_reachable_tagger(&world);
 
-    printf("AFTER FIRST RUN THROUGH\n");
-    print_world(world);
+    // printf("AFTER FIRST RUN THROUGH\n");
+    // print_world(world);
 
 
 }
@@ -274,7 +274,7 @@ int ovrl_reachable_tagger(robot_world_t *world) {
 
         }
     }
-    printf("ovrl_change = %d\n", ovrl_change);
+
     return ovrl_change;
 
 
@@ -336,7 +336,7 @@ int indiv_reachable_tagger(robot_world_t *world, int x, int y) {
         change = 1;
 
     }
-    printf("change = %d\n", change);
+
     return change;
 
 }
