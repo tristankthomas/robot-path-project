@@ -69,40 +69,51 @@
 #define REACHABLE '1'
 #define UNEXPLORED '-'
 
+#define MAX_COST 1000
+
+#define DIAG_COST 3
+#define CROSS_COST 2
+
 
 /* ------- Typedefs ------- */
 
-typedef char cols_t[MAX_COLS];
 typedef int one_obst_t[OBSTA_COLS];
-typedef cols_t coords_t[MAX_ROWS];
 typedef one_obst_t obsts_t[MAX_OBSTA];
+typedef char char_cols_t[MAX_COLS];
+typedef char_cols_t char_coords_t[MAX_ROWS];
+typedef int int_cols_t[MAX_COLS];
+typedef int_cols_t int_coords_t[MAX_ROWS];
 
 typedef struct {
-    coords_t coords_type;
     obsts_t obstacles;
+    char_coords_t coords_type;
+    int_coords_t coords_cost;
     int n_rows, n_cols, n_obstas;
 } robot_world_t;
 
 
 /* -- Function prototypes - */
 void read_data(robot_world_t *world, int max_rows, int max_cols);
-void do_stage1(robot_world_t world, int stage);
-void do_stage2(robot_world_t world, int stage);
+void do_stage1(robot_world_t *world, int stage);
+void do_stage2(robot_world_t *world, int stage);
+void do_stage3(robot_world_t *world, int stage);
 void print_stage(int stage);
 void print_blank(void);
 void print_obstacle(robot_world_t world, int obst_num);
 int obstacle_tagger(robot_world_t *world);
 int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker);
+int ovrl_zone_tagger_s3(robot_world_t *world, int x_start, int y_start);
+
 int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker);
+int indiv_zone_tagger_s3(robot_world_t *world, int x, int y);
+
 int edge_detect(robot_world_t *world, int x, int y, int type);
-int zone_tagger(robot_world_t *world, char marker);
+int unreach_zone_tagger(robot_world_t *world, char marker);
 void print_cell_stats(robot_world_t world, int num, int stage);
 
 /* test function */
 void print_world(robot_world_t world);
-// int full_obstacle_check(robot_world_t world, int row, int col);
-// int edge_check(robot_world_t world, int y, int x);
-// int indiv_obstacle_check(robot_world_t world, int y, int x, int obsta, int type);
+void mix_print_world(robot_world_t world);
 
 
 /* ============================== Main function ============================= */
@@ -112,17 +123,23 @@ int main(int argc, char *argv[]) {
     
     read_data(&robot_world, MAX_ROWS, MAX_COLS);
 
-    /* initialises all coordinates as type '-' */
+    /* initialises all char coordinates as type '-' */
     for (int i = 0; i < robot_world.n_rows; i++) {
         for (int j = 0; j < robot_world.n_cols; j++) {
             robot_world.coords_type[i][j] = UNEXPLORED;
-
         }
-
     }
 
-    do_stage1(robot_world, STAGE1);
-    do_stage2(robot_world, STAGE2);
+    /* initialises all int coordinates to max cost */
+    for (int i = 0; i < robot_world.n_rows; i++) {
+        for (int j = 0; j < robot_world.n_cols; j++) {
+            robot_world.coords_cost[i][j] = MAX_COST;
+        }
+    }
+
+    do_stage1(&robot_world, STAGE1);
+    do_stage2(&robot_world, STAGE2);
+    do_stage3(&robot_world, STAGE3);
     
 
 	return 0;
@@ -161,21 +178,21 @@ void read_data(robot_world_t *world, int max_rows, int max_cols) {
 
       
 
-void do_stage1(robot_world_t world, int stage) {
+void do_stage1(robot_world_t *world, int stage) {
     int i;
     /* print world dimensions */
     print_stage(stage);
     printf("world is %2d cells wide x %2d cells high\n", 
-        world.n_cols, world.n_rows);
+        world->n_cols, world->n_rows);
 
     /* prints out number of obstacles */
     print_stage(stage);
-    printf("world contains %d obstacles\n", world.n_obstas);
+    printf("world contains %d obstacles\n", world->n_obstas);
 
     /* prints areas of each obstacle */
-    for (i = 0; i < world.n_obstas; i++) {
+    for (i = 0; i < world->n_obstas; i++) {
         print_stage(stage);
-        print_obstacle(world, i);
+        print_obstacle(*world, i);
     }
 
     print_blank();
@@ -194,21 +211,21 @@ void do_stage1(robot_world_t world, int stage) {
       cells will be marked '0' and unreachable cells will be marked from 'a' 
       to 'z' depending on number of zones. */
 
-void do_stage2(robot_world_t world, int stage) {
+void do_stage2(robot_world_t *world, int stage) {
 
     int num_reach = 1, prev_num_reach, num_obsta, num_zone = 0; //i = 0, j = 0, ;
     char tag = 'a';
 
 
     /* marking obstacle cells */
-    num_obsta = obstacle_tagger(&world);
+    num_obsta = obstacle_tagger(world);
 
     // printf("AFTER OBSTACLES ADDED\n");
     // print_world(world);
 
     while (1) {
         prev_num_reach = num_reach;
-        num_reach += ovrl_zone_tagger(&world, HOME_X, HOME_Y, REACHABLE);
+        num_reach += ovrl_zone_tagger(world, HOME_X, HOME_Y, REACHABLE);
 
         if (prev_num_reach == num_reach) {
             break;
@@ -221,12 +238,12 @@ void do_stage2(robot_world_t world, int stage) {
 
 
     }
-    print_cell_stats(world, num_reach, stage);
+    print_cell_stats(*world, num_reach, stage);
     printf("reachable\n");
 
 
     while (1) {
-        num_zone = zone_tagger(&world, tag++);
+        num_zone = unreach_zone_tagger(world, tag++);
 
         if (!num_zone) {
             break;
@@ -238,22 +255,40 @@ void do_stage2(robot_world_t world, int stage) {
 
         // j++;
 
-        print_cell_stats(world, num_zone, stage);
+        print_cell_stats(*world, num_zone, stage);
         printf("in unreachable zone %c\n", tag - 1);
 
 
     }
     
-    print_cell_stats(world, num_obsta, stage);
+    print_cell_stats(*world, num_obsta, stage);
     printf("obstacles\n");
 
     print_blank();
     // printf("ovrl_changes = %d and num_obsta = %d\n", num_reach, num_obsta);
 
-    
+}
+
+/* ================================= Stage 3 ================================ */
+
+/* Stage 3 outputs the following
+    - map where pipe represents obstacle, and the shortest route to the cell
+      from home base is represented by 2 for rectilinear and 3 for diagonal */
+
+/* will overwrite the array from stage 2 as the reachable cells will now need
+   new data */
+
+
+void do_stage3(robot_world_t *world, int stage) {
+
+    ovrl_zone_tagger_s3(world, HOME_X, HOME_Y);
+
+    mix_print_world(*world);
+
 
 
 }
+
 
 /* ========================================================================== */
 /* ============================ Helper functions ============================ */
@@ -261,7 +296,7 @@ void do_stage2(robot_world_t world, int stage) {
 
 /* ====================== Calculation helper functions ====================== */
 
-/* Tags all the obstacles as char '0' if obstacle at that coordinate */
+/* Tags all the obstacles as char '|' if obstacle at that coordinate */
 int obstacle_tagger(robot_world_t *world) {
     int num_obsta = 0;
     for (int i = 0; i < world->n_obstas; i++) {
@@ -298,22 +333,25 @@ int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker
     for (int i = y_start; i < world->n_rows; i++) {
 
         for (int j = x_start; j < world->n_cols; j++) {
-
+            /* stage 2 */
             if (world->coords_type[i][j] == marker) {
                 
                 tot_changes += indiv_zone_tagger(world, j, i, marker);
 
             }
 
+            /* stage 3 */
+
+
+
         }
     }
 
     return tot_changes;
 
-
-
-
 }
+
+
 
 
 /* ========================================================================== */
@@ -337,7 +375,7 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
     /* check to the right */
     if (!right_edge && world->coords_type[y][right_x] != OBSTACLE && 
             world->coords_type[y][right_x] != marker) {
-
+        /* could add if statement to seperate s2 and s3 */
         world->coords_type[y][right_x] = marker;
         changes++;
 
@@ -367,6 +405,99 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
 
         world->coords_type[down_y][x] = marker;
         changes++;
+
+    }
+
+    return changes;
+
+}
+
+/* ========================================================================== */
+
+
+int ovrl_zone_tagger_s3(robot_world_t *world, int x_start, int y_start) {
+    int tot_changes = 0;
+    /* initialise starting point */
+    world->coords_cost[y_start][x_start] = 0;
+
+    for (int i = y_start; i < world->n_rows; i++) {
+
+        for (int j = x_start; j < world->n_cols; j++) {
+            /* stage 2 */
+                if (world->coords_type[i][j] == REACHABLE) {
+                    indiv_zone_tagger_s3(world, j, i);
+                }
+                
+
+            
+
+            /* stage 3 */
+
+
+
+        }
+    }
+
+    return tot_changes;
+
+}
+
+/* ========================================================================== */
+
+int indiv_zone_tagger_s3(robot_world_t *world, int x, int y) {
+    int right_x = x + 1;
+    int left_x = x - 1; 
+    int up_y = y + 1;
+    int down_y = y - 1;
+
+    int changes = 0;
+
+    int cost = world->coords_cost[y][x];
+
+    /* flags for edges */
+    int right_edge = edge_detect(world, x, y, RIGHT);
+    int left_edge = edge_detect(world, x, y, LEFT);
+    int top_edge = edge_detect(world, x, y, TOP);
+    int bottom_edge = edge_detect(world, x, y, BOTTOM);
+
+    /* check to the right */
+    if (!right_edge && world->coords_type[y][right_x] != OBSTACLE) {
+        /* could add if statement to seperate s2 and s3 */
+        if (cost + CROSS_COST < world->coords_cost[y][right_x]) {
+            world->coords_cost[y][right_x] = cost + CROSS_COST;
+            changes++;
+        }
+        
+
+    }
+
+    /* checks to the left */
+    if (!left_edge && world->coords_type[y][left_x] != OBSTACLE) {
+
+        if (cost + CROSS_COST < world->coords_cost[y][left_x]) {
+            world->coords_cost[y][left_x] = cost + CROSS_COST;
+            changes++;
+        }
+
+    }
+
+    /* checks above */
+    if (!top_edge && world->coords_type[up_y][x] != OBSTACLE) {
+
+        if (cost + CROSS_COST < world->coords_cost[up_y][x]) {
+            world->coords_cost[up_y][x] = cost + CROSS_COST;
+            changes++;
+        }
+
+    }
+
+    /* checks below */
+    if (!bottom_edge && world->coords_type[down_y][x] != OBSTACLE) {
+
+        if (cost + CROSS_COST < world->coords_cost[down_y][x]) {
+            world->coords_cost[down_y][x] = cost + CROSS_COST;
+            changes++;
+        }
 
     }
 
@@ -410,7 +541,7 @@ int edge_detect(robot_world_t *world, int x, int y, int type) {
 
 /* ========================================================================== */
 
-int zone_tagger(robot_world_t *world, char marker) {
+int unreach_zone_tagger(robot_world_t *world, char marker) {
 
     for (int i = HOME_Y; i < world->n_rows; i++) {
 
@@ -507,3 +638,42 @@ void print_world(robot_world_t world) {
 
 
 }
+
+/* ========================================================================== */
+
+void mix_print_world(robot_world_t world) {
+
+    for (int i = world.n_rows - 1; i >= -1; i--) {
+        if (i != -1) {
+            printf("%2d ", i);
+        }
+
+        for (int j = world.n_cols - 1; j >= 0; j--) {
+
+            if (i == -1) {
+                if (j == world.n_cols - 1) {
+                    printf("\n");
+                    printf("   ");
+                }
+                printf(" %2d", j);
+            } else {
+                if (world.coords_type[i][j] == OBSTACLE || world.coords_type[i][j] >= 97) {
+                    printf("%3c", world.coords_type[i][j]);
+                } else {
+                    printf("%3d", world.coords_cost[i][j]);
+                }
+                
+            
+            }
+            
+        }
+        printf("\n");
+    }
+
+    printf("\n");
+    printf("\n");
+
+
+}
+
+/* programming is fun */
