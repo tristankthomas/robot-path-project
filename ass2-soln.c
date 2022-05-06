@@ -206,7 +206,7 @@ void do_stage1(robot_world_t world, int stage) {
 
 void do_stage2(robot_world_t world, int stage) {
 
-    int i = 0;
+    int i = 0, total_reach = 1, prev_total_reach;
 
     /* marking home base cell */
     world.coords_type[FIRST_Y][FIRST_X] = REACHABLE; // home base
@@ -215,11 +215,22 @@ void do_stage2(robot_world_t world, int stage) {
 
     printf("AFTER OBSTACLES ADDED\n");
     print_world(world);
-    while (ovrl_reachable_tagger(&world) == 1) {
+    while (1) {
+        prev_total_reach = total_reach;
+        total_reach += ovrl_reachable_tagger(&world);
+
+        if (prev_total_reach == total_reach) {
+            break;
+        }
         printf("AFTER RUN %d:\n", i);
         print_world(world);
+        
         i++;
+        
+        
+
     }
+    printf("ovrl_changes = %d\n", total_reach);
 
     // ovrl_reachable_tagger(&world);
 
@@ -259,23 +270,21 @@ void obstacle_tagger(robot_world_t *world) {
    non reachable cells as char '1' (indicating reachable). Returns 1 if a 
    change is made. */
 int ovrl_reachable_tagger(robot_world_t *world) {
-    int change = 0, ovrl_change = 0;
+    int tot_changes = 0;
     for (int i = FIRST_Y; i < world->n_rows; i++) {
 
         for (int j = FIRST_X; j < world->n_cols; j++) {
 
             if (world->coords_type[i][j] == REACHABLE) {
-                if (change) {
-                    ovrl_change = 1;
-                }
-                change = indiv_reachable_tagger(world, j, i);
+                
+                tot_changes += indiv_reachable_tagger(world, j, i);
 
             }
 
         }
     }
 
-    return ovrl_change;
+    return tot_changes;
 
 
 
@@ -293,7 +302,7 @@ int indiv_reachable_tagger(robot_world_t *world, int x, int y) {
     int up_y = y + 1;
     int down_y = y - 1;
 
-    int change = 0;
+    int changes = 0;
 
     /* flags for edges */
     int right_edge = edge_detect(world, x, y, RIGHT);
@@ -306,7 +315,7 @@ int indiv_reachable_tagger(robot_world_t *world, int x, int y) {
             world->coords_type[y][right_x] != REACHABLE) {
 
         world->coords_type[y][right_x] = REACHABLE;
-        change = 1;
+        changes++;
 
     }
 
@@ -315,7 +324,7 @@ int indiv_reachable_tagger(robot_world_t *world, int x, int y) {
             world->coords_type[y][left_x] != REACHABLE) {
 
         world->coords_type[y][left_x] = REACHABLE;
-        change = 1;
+        changes++;
 
     }
 
@@ -324,7 +333,7 @@ int indiv_reachable_tagger(robot_world_t *world, int x, int y) {
             world->coords_type[up_y][x] != REACHABLE) {
 
         world->coords_type[up_y][x] = REACHABLE;
-        change = 1;
+        changes++;
 
     }
 
@@ -333,11 +342,11 @@ int indiv_reachable_tagger(robot_world_t *world, int x, int y) {
             world->coords_type[down_y][x] != REACHABLE) {
 
         world->coords_type[down_y][x] = REACHABLE;
-        change = 1;
+        changes++;
 
     }
 
-    return change;
+    return changes;
 
 }
 
