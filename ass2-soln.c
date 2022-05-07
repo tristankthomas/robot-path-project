@@ -86,7 +86,6 @@ typedef char char_cols_t[MAX_COLS];
 typedef char_cols_t char_coords_t[MAX_ROWS];
 typedef int int_cols_t[MAX_COLS];
 typedef int_cols_t int_coords_t[MAX_ROWS];
-
 typedef struct {
     obsts_t obstacles;
     char_coords_t coords_type;
@@ -113,11 +112,6 @@ char conversion(int num);
 int edge_detect(robot_world_t *world, int x, int y, int type);
 int unreach_zone_tagger(robot_world_t *world, char marker);
 void print_cell_stats(robot_world_t world, int num, int stage);
-
-/* test function */
-void print_world(robot_world_t world);
-void mix_print_world(robot_world_t world);
-
 
 /* ============================== Main function ============================= */
 
@@ -218,16 +212,11 @@ void do_stage1(robot_world_t *world, int stage) {
       to 'z' depending on number of zones. */
 
 void do_stage2(robot_world_t *world, int stage) {
-
-    int num_reach = 1, prev_num_reach, num_obsta, num_zone = 0; // j = 0, i = 0;
+    int num_reach = 1, prev_num_reach, num_obsta, num_zone = 0;
     char tag = 'a';
-
 
     /* marking obstacle cells */
     num_obsta = obstacle_tagger(world);
-
-    // printf("AFTER OBSTACLES ADDED\n");
-    // print_world(*world);
 
     while (1) {
         prev_num_reach = num_reach;
@@ -237,12 +226,6 @@ void do_stage2(robot_world_t *world, int stage) {
         if (prev_num_reach == num_reach) {
             break;
         }
-
-        // printf("AFTER RUN %d:\n", i);
-        // print_world(*world);
-        
-        // i++;
-
 
     }
     print_cell_stats(*world, num_reach, stage);
@@ -256,15 +239,8 @@ void do_stage2(robot_world_t *world, int stage) {
             break;
         }
 
-
-        // printf("AFTER ZONE RUN %d NUMBER OF ADDITIONS IS %d:\n", j, num_zone);
-        // print_world(*world);
-
-        // j++;
-
         print_cell_stats(*world, num_zone, stage);
         printf("in unreachable zone %c\n", tag - 1);
-
 
     }
     
@@ -272,7 +248,6 @@ void do_stage2(robot_world_t *world, int stage) {
     printf("obstacles\n");
 
     print_blank();
-    // printf("ovrl_changes = %d and num_obsta = %d\n", num_reach, num_obsta);
 
 }
 
@@ -315,8 +290,6 @@ void do_stage3(robot_world_t *world, int stage) {
     }
 
 
-
-
     for (int i = world->n_rows - 1; i >= 0; i--) {
 
         if (i % 2 == 0) {
@@ -328,9 +301,9 @@ void do_stage3(robot_world_t *world, int stage) {
             }
 
             for (int j = 0; j < world->n_cols; j++) {
+
                     printf("%c", world->coords_type[i][j]);
                 
-
             }
 
         print_blank();
@@ -387,8 +360,9 @@ int obstacle_tagger(robot_world_t *world) {
 /* Robot moves through each cell and if cell is reachable tags all adjacent 
    non reachable cells as char '1' (indicating reachable). Returns 1 if a 
    change is made. */
+
 int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, 
-    char marker, int type) {
+        char marker, int type) {
     int tot_changes = 0;
     /* initialise starting point */
     world->coords_type[y_start][x_start] = marker;
@@ -397,16 +371,12 @@ int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start,
     for (int i = y_start; i < world->n_rows; i++) {
 
         for (int j = HOME_X; j < world->n_cols; j++) {
-            /* stage 2 */
+
             if (world->coords_type[i][j] == marker) {
                 
                 tot_changes += indiv_zone_tagger(world, j, i, marker, type);
 
             }
-
-            /* stage 3 */
-
-
 
         }
     }
@@ -439,6 +409,7 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker,
     int top_edge = edge_detect(world, x, y, TOP);
     int bottom_edge = edge_detect(world, x, y, BOTTOM);
 
+    /* flags for obstacles */
     int right_obst = world->coords_type[y][right_x] == OBSTACLE;
     int left_obst = world->coords_type[y][left_x] == OBSTACLE;
     int up_obst = world->coords_type[up_y][x] == OBSTACLE;
@@ -449,7 +420,7 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker,
     int down_left_obst = world->coords_type[down_y][left_x] == OBSTACLE;
 
     
-/* check to the right */
+    /* check to the right */
     if (!right_edge && !right_obst) {
         if (world->coords_type[y][right_x] != marker && type == TYPE_REACH) {
             world->coords_type[y][right_x] = marker;
@@ -530,8 +501,6 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker,
 
     }
 
-
-
     /* checks top left */
     if ((!left_edge && !top_edge) && 
             (!up_left_obst && !left_obst && !up_obst)) {
@@ -551,8 +520,6 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker,
 
     }
 
-
-
     /* checks bottom right */
     if ((!right_edge && !bottom_edge) && 
             (!down_right_obst && !right_obst && !down_obst)) {
@@ -570,8 +537,6 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker,
         }
 
     }
-
-
 
     /* checks bottom left */
     if ((!left_edge && !bottom_edge) && 
@@ -591,7 +556,6 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker,
 
     }
 
-
     return changes;
 
 }
@@ -607,7 +571,6 @@ int edge_detect(robot_world_t *world, int x, int y, int type) {
         return x == world->n_cols - 1;
     }
     
-
     /* left edge detection */
     if (type == LEFT) {
         return x == HOME_X;
@@ -632,7 +595,7 @@ int edge_detect(robot_world_t *world, int x, int y, int type) {
 /* ========================================================================== */
 
 int unreach_zone_tagger(robot_world_t *world, char marker) {
-    int num_reach = 0, prev_num_reach; //k =;
+    int num_reach = 0, prev_num_reach;
     for (int i = HOME_Y; i < world->n_rows; i++) {
 
         for (int j = HOME_X; j < world->n_cols; j++) {
@@ -640,35 +603,25 @@ int unreach_zone_tagger(robot_world_t *world, char marker) {
             if (world->coords_type[i][j] == UNEXPLORED) {
 
                 /* plus 1 to include start */
-                while (1) {
-                    
+                while (1) {           
                     prev_num_reach = num_reach;
                     num_reach += ovrl_zone_tagger(world, j, i, marker, 
                         TYPE_REACH);
 
-                    // printf("run #%d, num_reach = %d\n", k, num_reach);
-                    // k++;
-
-                if (prev_num_reach == num_reach) {
-                    break;
-                }
-
+                    if (prev_num_reach == num_reach) {
+                        break;
+                    }
 
                 }
-
 
                 return num_reach + 1;
-                
                 break;
-
             }
 
         }
     }
 
     return 0;
-
-
 }
 
 /* ========================================================================== */
@@ -724,7 +677,6 @@ void print_cell_stats(robot_world_t world, int num, int stage) {
 void print_stage(int stage) {
 
     printf("S%d, ", stage);
-
     return;
 }
 
@@ -735,77 +687,4 @@ void print_blank(void) {
     printf("\n");
 }
 
-
-
-
-/* ============================= Test functions ============================= */
-
-void print_world(robot_world_t world) {
-
-    for (int i = world.n_rows - 1; i >= -1; i--) {
-        if (i != -1) {
-            printf("%2d ", i);
-        }
-
-        for (int j = 0; j < world.n_cols; j++) {
-
-            if (i == -1) {
-                if (j == world.n_cols - 1) {
-                    printf("\n");
-                    printf("   ");
-                }
-                printf(" %2d", j);
-            } else {
-                printf("%3c", world.coords_type[i][j]);
-            
-            }
-            
-        }
-        printf("\n");
-    }
-
-    printf("\n");
-    printf("\n");
-
-
-}
-
-/* ========================================================================== */
-
-void mix_print_world(robot_world_t world) {
-
-    for (int i = world.n_rows - 1; i >= -1; i--) {
-        if (i != -1) {
-            printf("%2d ", i);
-        }
-
-        for (int j = 0; j < world.n_cols; j++) {
-
-            if (i == -1) {
-                if (j == world.n_cols - 1) {
-                    printf("\n");
-                    printf("   ");
-                }
-                printf(" %2d", j);
-            } else {
-                if (world.coords_type[i][j] == OBSTACLE || 
-                        world.coords_type[i][j] >= 97) {
-                    printf("%4c", world.coords_type[i][j]);
-                } else {
-                    printf("%4d", world.coords_cost[i][j]);
-                }
-                
-            
-            }
-            
-        }
-        printf("\n");
-    }
-
-    printf("\n");
-    printf("\n");
-
-
-}
-
-/* programming is fun */
+/* =========================== programming is fun =========================== */
