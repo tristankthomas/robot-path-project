@@ -57,6 +57,7 @@
 #define X_MAX 1
 #define Y_MIN 2
 #define Y_MAX 3
+
 #define HOME_Y 0
 #define HOME_X 0
 
@@ -66,9 +67,10 @@
 #define BOTTOM 4
 
 #define OBSTACLE '|'
-#define REACHABLE '1'
+#define REACHABLE 'R'
 #define UNEXPLORED '-'
 
+/* define later */
 #define MAX_COST 100000
 
 #define DIAG_COST 3
@@ -117,9 +119,11 @@ void print_cell_stats(robot_world_t world, int num, int stage);
 
 int main(int argc, char *argv[]) {
     robot_world_t robot_world;
+    /* initialised number of obstacles */
+    robot_world.n_obstas = 0;
     
     read_data(&robot_world, MAX_ROWS, MAX_COLS);
-
+    
     /* initialises all cost and type coordinates as max cost and '-' */
     for (int i = 0; i < robot_world.n_rows; i++) {
         for (int j = 0; j < robot_world.n_cols; j++) {
@@ -140,7 +144,7 @@ int main(int argc, char *argv[]) {
 /* ============================ Reading function ============================ */
 
 void read_data(robot_world_t *world, int max_rows, int max_cols) {
-    int x_min, x_max, y_min, y_max, num = 0;
+    int x_min, x_max, y_min, y_max;
     /* scans for the first two ints */
     if (scanf("%d %d", &world->n_cols, &world->n_rows) != 2) {
         exit(EXIT_FAILURE);
@@ -148,12 +152,12 @@ void read_data(robot_world_t *world, int max_rows, int max_cols) {
 
     /* scans the remaining obstacles */
     while(scanf("%d %d %d %d", &x_min, &x_max, &y_min, &y_max) == 4) {
-        world->obstacles[num][X_MIN] = x_min;
-        world->obstacles[num][X_MAX] = x_max;
-        world->obstacles[num][Y_MIN] = y_min;
-        world->obstacles[num][Y_MAX] = y_max;
+        world->obstacles[world->n_obstas][X_MIN] = x_min;
+        world->obstacles[world->n_obstas][X_MAX] = x_max;
+        world->obstacles[world->n_obstas][Y_MIN] = y_min;
+        world->obstacles[world->n_obstas][Y_MAX] = y_max;
         /* post-increment */
-        world->n_obstas = num++;
+        world->n_obstas++;
 
         /* bounds check */
         if (x_min < HOME_X || x_max > world->n_cols - 1 || 
@@ -164,7 +168,6 @@ void read_data(robot_world_t *world, int max_rows, int max_cols) {
         }
 
     }
-    world->n_obstas++;
     return;
 }
 
@@ -176,8 +179,7 @@ void read_data(robot_world_t *world, int max_rows, int max_cols) {
     - number of obstacles in world
     - obstacle dimensions */
 
-      
-
+    
 void do_stage1(robot_world_t *world, int stage) {
     int i;
     /* print world dimensions */
@@ -275,19 +277,20 @@ void do_stage3(robot_world_t *world, int stage) {
     }
 
     /* adding correct formatted chars to coords_type */
-    world->coords_type[HOME_Y][HOME_X] = 'R';
+    
     for (int i = 0; i < world->n_rows; i++) {
         for (int j = 0; j < world->n_cols; j++) {
             if (world->coords_type[i][j] == REACHABLE) {
 
                 world->coords_type[i][j] = conversion(world->coords_cost[i][j]);
-
-                
+        
             }
 
         }
 
     }
+
+    world->coords_type[HOME_Y][HOME_X] = REACHABLE;
 
 
     for (int i = world->n_rows - 1; i >= 0; i--) {
@@ -384,9 +387,6 @@ int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start,
     return tot_changes;
 
 }
-
-
-
 
 /* ========================================================================== */
 
@@ -595,26 +595,26 @@ int edge_detect(robot_world_t *world, int x, int y, int type) {
 /* ========================================================================== */
 
 int unreach_zone_tagger(robot_world_t *world, char marker) {
-    int num_reach = 0, prev_num_reach;
-    for (int i = HOME_Y; i < world->n_rows; i++) {
+    int num_unreach = 0, prev_num_unreach, i, j;
+    for (i = HOME_Y; i < world->n_rows; i++) {
 
-        for (int j = HOME_X; j < world->n_cols; j++) {
+        for (j = HOME_X; j < world->n_cols; j++) {
 
             if (world->coords_type[i][j] == UNEXPLORED) {
 
                 /* plus 1 to include start */
                 while (1) {           
-                    prev_num_reach = num_reach;
-                    num_reach += ovrl_zone_tagger(world, j, i, marker, 
+                    prev_num_unreach = num_unreach;
+                    num_unreach += ovrl_zone_tagger(world, j, i, marker, 
                         TYPE_REACH);
 
-                    if (prev_num_reach == num_reach) {
+                    if (prev_num_unreach == num_unreach) {
                         break;
                     }
 
                 }
 
-                return num_reach + 1;
+                return num_unreach + 1;
                 break;
             }
 
