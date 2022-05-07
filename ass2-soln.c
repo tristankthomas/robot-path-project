@@ -74,6 +74,9 @@
 #define DIAG_COST 3
 #define CROSS_COST 2
 
+#define TYPE_REACH 0
+#define TYPE_COST 1
+
 
 /* ------- Typedefs ------- */
 
@@ -102,10 +105,10 @@ void print_stage(int stage);
 void print_blank(void);
 void print_obstacle(robot_world_t world, int obst_num);
 int obstacle_tagger(robot_world_t *world);
-int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker);
+int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker, int type);
 int ovrl_zone_tagger_s3(robot_world_t *world, int x_start, int y_start);
 
-int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker);
+int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker, int type);
 int indiv_zone_tagger_s3(robot_world_t *world, int x, int y);
 char conversion(int num);
 
@@ -227,7 +230,7 @@ void do_stage2(robot_world_t *world, int stage) {
 
     while (1) {
         prev_num_reach = num_reach;
-        num_reach += ovrl_zone_tagger(world, HOME_X, HOME_Y, REACHABLE);
+        num_reach += ovrl_zone_tagger(world, HOME_X, HOME_Y, REACHABLE, TYPE_REACH);
 
         if (prev_num_reach == num_reach) {
             break;
@@ -286,7 +289,7 @@ void do_stage3(robot_world_t *world, int stage) {
 
     while(1) {
         prev_num_changes = num_changes;
-        num_changes += ovrl_zone_tagger_s3(world, HOME_X, HOME_Y);
+        num_changes += ovrl_zone_tagger(world, HOME_X, HOME_Y, REACHABLE, TYPE_COST);
 
         if (prev_num_changes == num_changes) {
             break;
@@ -381,10 +384,11 @@ int obstacle_tagger(robot_world_t *world) {
 /* Robot moves through each cell and if cell is reachable tags all adjacent 
    non reachable cells as char '1' (indicating reachable). Returns 1 if a 
    change is made. */
-int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker) {
+int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker, int type) {
     int tot_changes = 0;
     /* initialise starting point */
     world->coords_type[y_start][x_start] = marker;
+    world->coords_cost[y_start][x_start] = 0;
 
     for (int i = y_start; i < world->n_rows; i++) {
 
@@ -392,7 +396,7 @@ int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker
             /* stage 2 */
             if (world->coords_type[i][j] == marker) {
                 
-                tot_changes += indiv_zone_tagger(world, j, i, marker);
+                tot_changes += indiv_zone_tagger(world, j, i, marker, type);
 
             }
 
@@ -414,13 +418,15 @@ int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, char marker
 
 /* Checks for all adjacent cells (8 checks) and tags with reachable if not an 
    obstacle or outside array */
-int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
+int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker, int type) {
     int right_x = x + 1;
     int left_x = x - 1; 
     int up_y = y + 1;
     int down_y = y - 1;
 
     int changes = 0;
+
+    int cost = world->coords_cost[y][x];
 
     /* flags for edges */
     int right_edge = edge_detect(world, x, y, RIGHT);
@@ -440,43 +446,57 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
     
 /* check to the right */
     if (!right_edge && !right_obst) {
-
-        if (world->coords_type[y][right_x] != marker) {
+        if (world->coords_type[y][right_x] != marker && type == TYPE_REACH) {
             world->coords_type[y][right_x] = marker;
             changes++;
+
         }
         
-        
+        if (cost + CROSS_COST < world->coords_cost[y][right_x] && type == TYPE_COST) {
+            world->coords_cost[y][right_x] = cost + CROSS_COST;
+            changes++;
+        }
 
     }
 
     /* checks to the left */
     if (!left_edge && !left_obst) {
 
-        if (world->coords_type[y][left_x] != marker) {
+        if (world->coords_type[y][left_x] != marker && type == TYPE_REACH) {
             world->coords_type[y][left_x] = marker;
             changes++;
         }
-        
+        if (cost + CROSS_COST < world->coords_cost[y][left_x] && type == TYPE_COST) {
+            world->coords_cost[y][left_x] = cost + CROSS_COST;
+            changes++;
+        }
 
     }
 
     /* checks above */
     if (!top_edge && !up_obst) {
 
-        if (world->coords_type[up_y][x] != marker) {
+        if (world->coords_type[up_y][x] != marker && type == TYPE_REACH) {
             world->coords_type[up_y][x] = marker;
             changes++;
         }
-
+        if (cost + CROSS_COST < world->coords_cost[up_y][x] && type == TYPE_COST) {
+            world->coords_cost[up_y][x] = cost + CROSS_COST;
+            changes++;
+        }
 
     }
 
     /* checks below */
     if (!bottom_edge && !down_obst) {
 
-        if (world->coords_type[down_y][x] != marker) {
+        if (world->coords_type[down_y][x] != marker && type == TYPE_REACH) {
             world->coords_type[down_y][x] = marker;
+            changes++;
+        }
+
+        if (cost + CROSS_COST < world->coords_cost[down_y][x] && type == TYPE_COST) {
+            world->coords_cost[down_y][x] = cost + CROSS_COST;
             changes++;
         }
 
@@ -486,8 +506,13 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
     if ((!right_edge && !top_edge) && 
              (!up_right_obst && !right_obst && !up_obst)) {
         
-        if (world->coords_type[up_y][right_x] != marker) {
+        if (world->coords_type[up_y][right_x] != marker && type == TYPE_REACH) {
             world->coords_type[up_y][right_x] = marker;
+            changes++;
+        }
+
+        if (cost + DIAG_COST < world->coords_cost[up_y][right_x] && type == TYPE_COST) {
+            world->coords_cost[up_y][right_x] = cost + DIAG_COST;
             changes++;
         }
         
@@ -500,8 +525,13 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
     if ((!left_edge && !top_edge) && 
             (!up_left_obst && !left_obst && !up_obst)) {
         
-        if (world->coords_type[up_y][left_x] != marker) {
+        if (world->coords_type[up_y][left_x] != marker && type == TYPE_REACH) {
             world->coords_type[up_y][left_x] = marker;
+            changes++;
+        }
+
+        if (cost + DIAG_COST < world->coords_cost[up_y][left_x] && type == TYPE_COST) {
+            world->coords_cost[up_y][left_x] = cost + DIAG_COST;
             changes++;
         }
 
@@ -514,8 +544,13 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
     if ((!right_edge && !bottom_edge) && 
             (!down_right_obst && !right_obst && !down_obst)) {
 
-        if (world->coords_type[down_y][right_x] != marker) {
+        if (world->coords_type[down_y][right_x] != marker && type == TYPE_REACH) {
             world->coords_type[down_y][right_x] = marker;
+            changes++;
+        }
+
+        if (cost + DIAG_COST < world->coords_cost[down_y][right_x] && type == TYPE_COST) {
+            world->coords_cost[down_y][right_x] = cost + DIAG_COST;
             changes++;
         }
 
@@ -527,8 +562,13 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
     if ((!left_edge && !bottom_edge) && 
             (!down_left_obst && !left_obst && !down_obst)) {
         
-        if (world->coords_type[down_y][left_x] != marker) {
+        if (world->coords_type[down_y][left_x] != marker && type == TYPE_REACH) {
             world->coords_type[down_y][left_x] = marker;
+            changes++;
+        }
+
+        if (cost + DIAG_COST < world->coords_cost[down_y][left_x] && type == TYPE_COST) {
+            world->coords_cost[down_y][left_x] = cost + DIAG_COST;
             changes++;
         }
 
@@ -735,7 +775,7 @@ int unreach_zone_tagger(robot_world_t *world, char marker) {
             if (world->coords_type[i][j] == UNEXPLORED) {
 
                 /* plus 1 to include start */
-                return ovrl_zone_tagger(world, j, i, marker) + 1;
+                return ovrl_zone_tagger(world, j, i, marker, TYPE_REACH) + 1;
                 
                 break;
 
