@@ -215,7 +215,7 @@ void do_stage1(robot_world_t *world, int stage) {
 
 void do_stage2(robot_world_t *world, int stage) {
 
-    int num_reach = 1, prev_num_reach, num_obsta, num_zone = 0; //j = 0, i = 0;
+    int num_reach = 1, prev_num_reach, num_obsta, num_zone = 0; // j = 0, i = 0;
     char tag = 'a';
 
 
@@ -439,48 +439,57 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
 
     
 /* check to the right */
-    if (!right_edge && !right_obst &&
-            world->coords_type[y][right_x] != marker) {
-        /* could add if statement to seperate s2 and s3 */
-        world->coords_type[y][right_x] = marker;
-        changes++;
+    if (!right_edge && !right_obst) {
+
+        if (world->coords_type[y][right_x] != marker) {
+            world->coords_type[y][right_x] = marker;
+            changes++;
+        }
+        
         
 
     }
 
     /* checks to the left */
-    if (!left_edge && !left_obst &&
-            world->coords_type[y][left_x] != marker) {
+    if (!left_edge && !left_obst) {
 
-        world->coords_type[y][left_x] = marker;
-        changes++;
+        if (world->coords_type[y][left_x] != marker) {
+            world->coords_type[y][left_x] = marker;
+            changes++;
+        }
+        
 
     }
 
     /* checks above */
-    if (!top_edge && !up_obst &&
-            world->coords_type[up_y][x] != marker) {
+    if (!top_edge && !up_obst) {
 
-        world->coords_type[up_y][x] = marker;
-        changes++;
+        if (world->coords_type[up_y][x] != marker) {
+            world->coords_type[up_y][x] = marker;
+            changes++;
+        }
+
 
     }
 
     /* checks below */
-    if (!bottom_edge && !down_obst &&
-            world->coords_type[down_y][x] != marker) {
+    if (!bottom_edge && !down_obst) {
 
-        world->coords_type[down_y][x] = marker;
-        changes++;
+        if (world->coords_type[down_y][x] != marker) {
+            world->coords_type[down_y][x] = marker;
+            changes++;
+        }
+
     }
 
     /* checks top right */
     if ((!right_edge && !top_edge) && 
-             (!up_right_obst && !right_obst && !up_obst) && 
-             world->coords_type[up_y][right_x] != marker) {
-        /* could add if statement to seperate s2 and s3 */
-        world->coords_type[up_y][right_x] = marker;
-        changes++;
+             (!up_right_obst && !right_obst && !up_obst)) {
+        
+        if (world->coords_type[up_y][right_x] != marker) {
+            world->coords_type[up_y][right_x] = marker;
+            changes++;
+        }
         
 
     }
@@ -489,12 +498,13 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
 
     /* checks top left */
     if ((!left_edge && !top_edge) && 
-            (!up_left_obst && !left_obst && !up_obst) &&
-            world->coords_type[up_y][left_x] != marker) {
-            
+            (!up_left_obst && !left_obst && !up_obst)) {
+        
+        if (world->coords_type[up_y][left_x] != marker) {
+            world->coords_type[up_y][left_x] = marker;
+            changes++;
+        }
 
-        world->coords_type[up_y][left_x] = marker;
-        changes++;
 
     }
 
@@ -502,12 +512,12 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
 
     /* checks bottom right */
     if ((!right_edge && !bottom_edge) && 
-            (!down_right_obst && !right_obst && !down_obst) &&
-            world->coords_type[down_y][right_x] != marker) {
-        /* could add if statement to seperate s2 and s3 */
-        world->coords_type[down_y][right_x] = marker;
-        changes++;
-        
+            (!down_right_obst && !right_obst && !down_obst)) {
+
+        if (world->coords_type[down_y][right_x] != marker) {
+            world->coords_type[down_y][right_x] = marker;
+            changes++;
+        }
 
     }
 
@@ -515,11 +525,12 @@ int indiv_zone_tagger(robot_world_t *world, int x, int y, char marker) {
 
     /* checks bottom left */
     if ((!left_edge && !bottom_edge) && 
-            (!down_left_obst && !left_obst && !down_obst) &&
-            world->coords_type[down_y][left_x] != marker) {
-
-        world->coords_type[down_y][left_x] = marker;
-        changes++;
+            (!down_left_obst && !left_obst && !down_obst)) {
+        
+        if (world->coords_type[down_y][left_x] != marker) {
+            world->coords_type[down_y][left_x] = marker;
+            changes++;
+        }
 
     }
 
@@ -569,7 +580,7 @@ int indiv_zone_tagger_s3(robot_world_t *world, int x, int y) {
     int top_edge = edge_detect(world, x, y, TOP);
     int bottom_edge = edge_detect(world, x, y, BOTTOM);
 
-    /* flags for edges */
+    /* flags for obstacle */
     int right_obst = world->coords_type[y][right_x] == OBSTACLE;
     int left_obst = world->coords_type[y][left_x] == OBSTACLE;
     int up_obst = world->coords_type[up_y][x] == OBSTACLE;
