@@ -71,7 +71,7 @@
 #define UNEXPLORED '-'
 
 /* define later */
-#define MAX_COST 100000
+#define MAX_COST 1000000
 
 #define DIAG_COST 3
 #define CROSS_COST 2
@@ -97,7 +97,7 @@ typedef struct {
 
 
 /* -- Function prototypes - */
-void read_data(robot_world_t *world, int max_rows, int max_cols);
+void read_data(robot_world_t *world);
 void do_stage1(robot_world_t *world, int stage);
 void do_stage2(robot_world_t *world, int stage);
 void do_stage3(robot_world_t *world, int stage);
@@ -121,8 +121,8 @@ int main(int argc, char *argv[]) {
     robot_world_t robot_world;
     /* initialised number of obstacles */
     robot_world.n_obstas = 0;
-    
-    read_data(&robot_world, MAX_ROWS, MAX_COLS);
+
+    read_data(&robot_world);
     
     /* initialises all cost and type coordinates as max cost and '-' */
     for (int i = 0; i < robot_world.n_rows; i++) {
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
 
 /* ============================ Reading function ============================ */
 
-void read_data(robot_world_t *world, int max_rows, int max_cols) {
+void read_data(robot_world_t *world) {
     int x_min, x_max, y_min, y_max;
     /* scans for the first two ints */
     if (scanf("%d %d", &world->n_cols, &world->n_rows) != 2) {
@@ -230,6 +230,7 @@ void do_stage2(robot_world_t *world, int stage) {
         }
 
     }
+
     print_cell_stats(*world, num_reach, stage);
     printf("reachable\n");
 
@@ -278,19 +279,17 @@ void do_stage3(robot_world_t *world, int stage) {
 
     /* adding correct formatted chars to coords_type */
     
-    for (int i = 0; i < world->n_rows; i++) {
-        for (int j = 0; j < world->n_cols; j++) {
-            if (world->coords_type[i][j] == REACHABLE) {
+    // for (int i = 0; i < world->n_rows; i++) {
+    //     for (int j = 0; j < world->n_cols; j++) {
+    //         if (world->coords_type[i][j] == REACHABLE) {
 
-                world->coords_type[i][j] = conversion(world->coords_cost[i][j]);
+    //             world->coords_type[i][j] = conversion(world->coords_cost[i][j]);
         
-            }
+    //         }
 
-        }
+    //     }
 
-    }
-
-    world->coords_type[HOME_Y][HOME_X] = REACHABLE;
+    // }
 
 
     for (int i = world->n_rows - 1; i >= 0; i--) {
@@ -305,7 +304,13 @@ void do_stage3(robot_world_t *world, int stage) {
 
             for (int j = 0; j < world->n_cols; j++) {
 
-                    printf("%c", world->coords_type[i][j]);
+                    if (i == 0 && j == 0) {
+                        printf("%c", REACHABLE);
+                    } else if (world->coords_type[i][j] == REACHABLE) {
+                        printf("%c", conversion(world->coords_cost[i][j]));
+                    } else {
+                        printf("%c", world->coords_type[i][j]);
+                    }
                 
             }
 
