@@ -1,0 +1,50 @@
+S1, world is 60 cells wide x 61 cells high
+S1, world contains 7 obstacles
+S1, obstacle  0 covers [25,34] x [ 0,19]
+S1, obstacle  1 covers [10,49] x [20,21]
+S1, obstacle  2 covers [10,49] x [50,51]
+S1, obstacle  3 covers [10,11] x [20,50]
+S1, obstacle  4 covers [50,51] x [20,50]
+S1, obstacle  5 covers [ 1,58] x [34,36]
+S1, obstacle  6 covers [30,31] x [ 0,51]
+
+S2, 2070 of 3660 cells are reachable
+S2,  216 of 3660 cells are in unreachable zone a
+S2,  216 of 3660 cells are in unreachable zone b
+S2,  234 of 3660 cells are in unreachable zone c
+S2,  234 of 3660 cells are in unreachable zone d
+S2,  690 of 3660 cells are obstacles
+
+S3, 60 + 2222......3333.....44...55...66...77...88...99...00...11...2
+S3,    | ....2222......333...44...55...66...77...88...99...00...11...
+S3,    | 11......2222....33...44...55...66...77...88...99...00...11..
+S3,    | ..1111......22...33...44...55...66...77...88...99...00...11.
+S3,    | ......1111...22...33...44...55...66...77...88...99...00...11
+S3, 50 + 0000......||||||||||||||||||||||||||||||||||||||||||00...11.
+S3,    | ....0000..||cccccccccccccccccc||dddddddddddddddddd||....11..
+S3,    | 99......00||cccccccccccccccccc||dddddddddddddddddd||1111....
+S3,    | ..9999....||cccccccccccccccccc||dddddddddddddddddd||......22
+S3,    | ......99..||cccccccccccccccccc||dddddddddddddddddd||..2222..
+S3, 40 + 8888...99.||cccccccccccccccccc||dddddddddddddddddd||22......
+S3,    | ...88...99||cccccccccccccccccc||dddddddddddddddddd||....3333
+S3,    | 7||||||||||||||||||||||||||||||||||||||||||||||||||||||||||.
+S3,    | .||||||||||||||||||||||||||||||||||||||||||||||||||||||||||4
+S3,    | ......7777||aaaaaaaaaaaaaaaaaa||bbbbbbbbbbbbbbbbbb||...55...
+S3, 30 + 6666......||aaaaaaaaaaaaaaaaaa||bbbbbbbbbbbbbbbbbb||6...555.
+S3,    | ....6666..||aaaaaaaaaaaaaaaaaa||bbbbbbbbbbbbbbbbbb||66.....5
+S3,    | 55......66||aaaaaaaaaaaaaaaaaa||bbbbbbbbbbbbbbbbbb||.6666...
+S3,    | ..5555....||aaaaaaaaaaaaaaaaaa||bbbbbbbbbbbbbbbbbb||.....666
+S3,    | ......5555||aaaaaaaaaaaaaaaaaa||bbbbbbbbbbbbbbbbbb||777.....
+S3, 20 + 4444......||||||||||||||||||||||||||||||||||||||||||...7777.
+S3,    | ....4444......5555...66..||||||||||11...00...99...888......7
+S3,    | 33......4444.....55...66.||||||||||.11...00...99.....8888...
+S3,    | ..3333......444...55...66||||||||||..11...00...9999......888
+S3,    | ......3333....44...55...6||||||||||...11...00......9999.....
+S3, 10 + 2222......33...44...55...||||||||||2...11....0000......9999.
+S3,    | ....2222...33...44...55..||||||||||22...111......0000......9
+S3,    | 11.....22...33...44...55.||||||||||.22.....1111......0000...
+S3,    | ..111...22...33...44...55||||||||||..2222......1111......000
+S3,    | ....11...22...33...44...5||||||||||......2222......1111.....
+S3,  0 + R0...11...22...33...44...||||||||||3333......2222......1111.
+
+ta daa!

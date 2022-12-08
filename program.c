@@ -84,8 +84,8 @@
 /* ------- Typedefs ------- */
 
 /* obstacle 2d array */
-typedef int one_obst_t[OBSTA_COLS];
-typedef one_obst_t obsts_t[MAX_OBSTA];
+typedef int one_obstacles_t[OBSTA_COLS];
+typedef one_obstacles_t obstacles_t[MAX_OBSTA];
 /* coordinates 2d array (each cell a character type) */
 typedef char char_cols_t[MAX_COLS];
 typedef char_cols_t char_coords_t[MAX_ROWS];
@@ -96,7 +96,7 @@ typedef int_cols_t int_coords_t[MAX_ROWS];
 /* structure defining robots world */
 typedef struct {
 
-    obsts_t obstacles;
+    obstacles_t obstacles;
     char_coords_t coords_type;
     int_coords_t coords_cost;
     int n_rows, n_cols, n_obstas;
@@ -109,9 +109,7 @@ void read_data(robot_world_t *world, int max_cols, int max_rows);
 void do_stage1(robot_world_t *world, int stage);
 void do_stage2(robot_world_t *world, int stage);
 void do_stage3(robot_world_t *world, int stage);
-void ta_da(void);
 void print_stage(int stage);
-void print_blank(void);
 void print_obstacle(robot_world_t world, int obst_num);
 int obstacle_tagger(robot_world_t *world);
 int ovrl_zone_tagger(robot_world_t *world, int x_start, int y_start, 
@@ -147,7 +145,7 @@ int main(int argc, char *argv[]) {
     do_stage2(&robot_world, STAGE2);
     do_stage3(&robot_world, STAGE3);
 
-    ta_da();
+    printf("ta daa!\n");
 
 	return 0;
 }
@@ -226,7 +224,7 @@ void do_stage1(robot_world_t *world, int stage) {
         print_obstacle(*world, i);
     }
 
-    print_blank();
+    printf("\n");
 
     return;
 
@@ -286,7 +284,7 @@ void do_stage2(robot_world_t *world, int stage) {
     print_cell_stats(*world, num_obsta, stage);
     printf("obstacles\n");
 
-    print_blank();
+    printf("\n");
 
     return;
 
@@ -341,27 +339,18 @@ void do_stage3(robot_world_t *world, int stage) {
                 
             }
 
-        print_blank();
+            printf("\n");
 
         }
         
     }
 
-    print_blank();
+    printf("\n");
 
     return;
 
 }
 
-/* ========================================================================== */
-
-/* Prints ta daa (signifying end of output) */
-
-void ta_da(void) {
-
-    printf("ta daa!\n");
-
-}
 
 /* ========================================================================== */
 /* ============================ Helper functions ============================ */
@@ -762,18 +751,6 @@ void print_cell_stats(robot_world_t world, int num, int stage) {
 void print_stage(int stage) {
 
     printf("S%d, ", stage);
-
-    return;
-}
-
-
-/* ========================================================================== */
-
-/* Simply prints a blank line */
-
-void print_blank(void) {
-
-    printf("\n");
 
     return;
 }
